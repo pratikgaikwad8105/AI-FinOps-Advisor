@@ -1,0 +1,217 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudPulse AI - Dashboard</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'advisor/css/styles.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="dashboard-body">
+
+    <!-- NAVBAR EXACTLY LIKE YOUR ORIGINAL -->
+    <header class="navbar">
+
+    <div class="logo">
+        <i class="fas fa-cloud fa-lg logo-icon"></i>
+        CloudPulse AI
+    </div>
+
+    <div class="header-title">Cloud Spending Dashboard</div>
+
+    <a href="{% url 'profile' %}" class="user-profile-link">
+        <div class="user-profile">
+            <i class="fas fa-user-circle fa-lg user-icon"></i>
+            User
+        </div>
+    </a>
+
+    <a href="{% url 'logout' %}" class="logout-button">
+        <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
+
+</header>
+
+    <main class="dashboard-main">
+
+
+        <!-- ========== SUMMARY CARDS ========== -->
+        <section class="summary-cards">
+            <div class="card summary-card">
+                <span class="card-title">Actual Cost (Last 30 days)</span>
+                <div class="metric-value">${{ summary.total_cost }}</div>
+
+                <div class="metric-change {% if summary.change_percentage >= 0 %}negative{% else %}positive{% endif %}">
+                    <i class="fas {% if summary.change_percentage >= 0 %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i>
+                    {{ summary.change_percentage }}%
+                </div>
+            </div>
+
+            <div class="card summary-card">
+                <span class="card-title">Forecasted Cost</span>
+                <div class="metric-value">${{ summary.predicted_next_month }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-chart-line"></i> Model Prediction
+                </div>
+            </div>
+
+            <div class="card summary-card glowing-green">
+                <span class="card-title">Savings Potential</span>
+                <div class="metric-value">${{ summary.savings }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-wallet"></i> Optimized Estimate
+                </div>
+            </div>
+        </section>
+
+
+        <hr>
+
+        <!-- ========== LIVE CONTROLS ========== -->
+        <section style="display:flex; gap:12px; margin-bottom:15px;">
+            <a href="{% url 'force_anomaly' %}">
+                <button class="cta-button" style="background:#ff3b3b;">Trigger Anomaly</button>
+            </a>
+
+            <a href="{% url 'solve_anomaly' %}">
+                <button class="cta-button" style="background:#0db56f;">Solve Anomaly</button>
+            </a>
+
+            <div class="live-indicator">● LIVE</div>
+        </section>
+
+
+        <hr>
+
+        <!-- ========== HOURLY GRAPH (REPLACES MONTHLY) ========== -->
+        <section class="charts-section card">
+            <h2>Hourly Cloud Spend (Real-Time Simulation)</h2>
+
+            <canvas id="hourlyChart"></canvas>
+
+            <div class="chart-legend">
+                <span class="legend-item red-line-marker">Hourly Cost</span>
+            </div>
+        </section>
+
+
+        <hr>
+
+        <!-- ==========  TOP ANOMALIES + TOP RECOMMENDATIONS  ========== -->
+        <section class="tables-section">
+
+            <!-- ANOMALIES -->
+            <div class="card anomaly-table">
+                <h3>
+                    <i class="fas fa-exclamation-triangle"></i> Anomaly Alerts
+                </h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date / Time</th>
+                            <th>Service</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for a in top_anomalies %}
+                        <tr class="{% if a.severity == 'HIGH' %}high-severity flash-anomaly{% endif %}">
+                            <td>{{ a.timestamp }}</td>
+                            <td class="service-tag">{{ a.service }}</td>
+                            <td>{{ a.description }}</td>
+                            <td><span class="severity {{ a.severity|lower }}">{{ a.severity }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">No anomalies detected</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <a href="{% url 'anomalies_list' %}" class="view-all-link">View All →</a>
+            </div>
+
+
+            <!-- RECOMMENDATIONS -->
+            <div class="card recommendations-table">
+                <h3>
+                    <i class="fas fa-lightbulb"></i> Optimization Recommendations
+                </h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Recommendation</th>
+                            <th>Service</th>
+                            <th>Estimated Savings</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for r in top_recs %}
+                        <tr>
+                            <td>{{ r.title }}</td>
+                            <td class="service-tag">{{ r.service }}</td>
+                            <td><span class="savings-value">{{ r.savings_text }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3">No recommendations</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <a href="{% url 'recommendations_list' %}" class="view-all-link">View All →</a>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="dashboard-footer">
+        &copy; 2025 CloudPulse AI. All rights reserved.
+    </footer>
+
+
+<!-- ========== CHART JS SCRIPT ========== -->
+<script>
+    const hourlyData = {{ hourly_chart_json|safe }};
+    const labels = hourlyData.map(x => x.timestamp);
+    const values = hourlyData.map(x => x.cost);
+
+    new Chart(document.getElementById("hourlyChart"), {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Hourly Cost",
+                data: values,
+                borderColor: "rgb(255,99,71)",
+                backgroundColor: "rgba(255,99,71,0.1)",
+                pointRadius: 2,
+                tension: 0.25
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: "#bfc7cf" } },
+                y: { ticks: { color: "#bfc7cf" } }
+            }
+        }
+    });
+
+    // Auto-refresh every 5 seconds
+    setInterval(() => { window.location.reload(); }, 5000);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Recommendations</title>
+    <link rel="stylesheet" href="{% static 'advisor/css/styles.css' %}">
+</head>
+
+<body class="dashboard-body">
+
+<header class="navbar">
+    <div class="logo"><i class="fas fa-cloud"></i> CloudPulse AI</div>
+    <div class="header-title">Optimization Recommendations</div>
+</header>
+
+<main class="dashboard-main">
+    <section class="card">
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Recommendation</th>
+                    <th>Service</th>
+                    <th>Estimated Savings</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for r in recs %}
+                <tr>
+                    <td>{{ r.title }}</td>
+                    <td class="service-tag">{{ r.service }}</td>
+                    <td><span class="savings-value">{{ r.savings_text }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">No recommendations available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </section>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,60 @@
+
+/* Existing user CSS + small additions */
+
+.sev-high { color: red; font-weight: bold; }
+.sev-medium { color: orange; font-weight: bold; }
+.sev-low { color: green; font-weight: bold; }
+
+.tab-btn {
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 8px;
+    background: #222;
+    color: white;
+    cursor: pointer;
+}
+
+.tab-content {
+    margin-top: 20px;
+}
+
+.anomaly-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.anomaly-table th, .anomaly-table td {
+    border: 1px solid #444;
+    padding: 8px;
+}
+
+.summary-card {
+    padding: 20px;
+    width: 200px;
+    display: inline-block;
+    margin-right: 20px;
+    background: #111;
+    color: #0ff;
+    border-radius: 12px;
+}
+
+.flash-anomaly {
+    animation: flash 0.7s ease-out 2;
+}
+
+@keyframes flash {
+    0% { background-color: rgba(255,0,0,0.2); }
+    100% { background-color: transparent; }
+}
+
+.live-indicator {
+    color: #00ff77;
+    font-weight: bold;
+    animation: pulse 1.2s infinite;
+}
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}

@@ -9,19 +9,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'advisor/css/styles.css' %}">
 </head>
+
 <body>
-    
-    <video autoplay muted loop id="bg-video">
-        <source src="index_video.mov" type="video/mp4"> 
-        </video>
-    
+
+    <!-- Background Video -->
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="{% static 'advisor/video/index_video.mov' %}" >
+    </video>
+
     <div class="landing-content">
         <div class="glass-card">
             <h1>CloudPulse AI</h1>
             <p class="subtitle">“Optimize, Predict & Save with intelligent FinOps automation.”</p>
-            <a href="{% url 'login' %}"
-        class="cta-button">Go to Login</a>
+
+            <a href="{% url 'advisor:login' %}" class="cta-button">Go to Login</a>
         </div>
     </div>
+
 </body>
 </html>

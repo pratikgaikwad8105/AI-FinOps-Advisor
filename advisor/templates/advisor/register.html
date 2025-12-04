@@ -7,10 +7,15 @@
   <link rel="stylesheet" href="{% static 'advisor/css/styles.css' %}">
 </head>
 <body>
+
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="{% static 'advisor/video/index_video.mov' %}" >
+    </video>
+
   <div class="landing-content">
     <div class="glass-card auth-card">
       <h1 class="auth-logo">CloudPulse AI</h1>
-      <form method="post" action="{% url 'register' %}">
+      <form method="post" action="{% url 'advisor:register' %}">
         {% csrf_token %}
         {% if error %}<div class="error-message visible">{{ error }}</div>{% endif %}
         <div class="input-group"><i class="fas fa-user icon"></i><input name="full_name" placeholder="Full Name" required></div>
@@ -19,7 +24,7 @@
         <div class="input-group"><i class="fas fa-lock icon"></i><input name="confirm_password" type="password" placeholder="Confirm Password" required></div>
         <button class="cta-button auth-submit-button" type="submit">Register</button>
       </form>
-      <a href="{% url 'login' %}" class="toggle-link">Already have an account? Login</a>
+      <a href="{% url 'advisor:login' %}" class="toggle-link">Already have an account? Login</a>
     </div>
   </div>
 </body>

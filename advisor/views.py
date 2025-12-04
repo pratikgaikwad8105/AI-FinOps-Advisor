@@ -239,9 +239,9 @@ def profile_page(request):
     return render(request, "advisor/profile.html", {"extras": extras})
 
 
-# Simple authentication helpers (if you want to use app-level login/register)
 def index(request):
-    return redirect("advisor:dashboard")
+    return render(request, "advisor/index.html")
+
 
 
 def login_user(request):

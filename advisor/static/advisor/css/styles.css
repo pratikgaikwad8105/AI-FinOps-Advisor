@@ -1312,3 +1312,79 @@ canvas {
     background: #00ffaa;
     box-shadow: 0 0 14px #00ff88;
 }
+/* Background Video */
+#bg-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+    opacity: 0.35;
+}
+
+/* Landing Page Content */
+.landing-content {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.glass-card {
+    background: rgba(0, 0, 0, 0.45);
+    padding: 40px 70px;
+    border-radius: 18px;
+    backdrop-filter: blur(12px);
+    text-align: center;
+    color: white;
+    box-shadow: 0 0 25px rgba(0,255,150,0.3);
+}
+
+.glass-card h1 {
+    font-size: 3.2rem;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 25px;
+    opacity: 0.9;
+}
+
+/* Button */
+.cta-button {
+    padding: 12px 28px;
+    background: #00ff99;
+    color: #000;
+    border-radius: 10px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.cta-button:hover {
+    background: #00cc77;
+}
+/* Fix service pill overflow issue */
+
+.anomaly-table table td:nth-child(2),
+.recommendations-table table td:nth-child(2) {
+    width: 140px;              /* force column width */
+    max-width: 140px;
+}
+
+.service-tag {
+    display: inline-block;
+    padding: 8px 14px;
+    background-color: #0e2a3f;
+    border-radius: 5px;
+    color: #2ECFFF;
+    font-weight: 600;
+
+    max-width: 120px;          /* prevents stretching */
+    white-space: nowrap;       /* keeps one line */
+    overflow: hidden;          /* hides overflow */
+    text-overflow: ellipsis;   /* adds "..." */
+}

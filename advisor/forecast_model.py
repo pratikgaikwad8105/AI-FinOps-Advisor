@@ -1,53 +1,73 @@
+# advisor/forecast_model.py
 import pandas as pd
-from prophet import Prophet
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 def train_and_forecast():
+    """
+    Wrapper required by views.py.
+    Simply calls train_and_forecast_daily().
+    """
+    return train_and_forecast_daily()
 
-    # Load daily data
-    df = pd.read_csv(BASE_DIR / "advisor" / "billing_daily.csv")
 
-    # Ensure the correct columns exist
-    if "date" not in df.columns or "total_cost" not in df.columns:
-        raise ValueError("billing_daily.csv must contain 'date' and 'total_cost' columns")
-
-    # Convert date to datetime
-    df["date"] = pd.to_datetime(df["date"])
-
-    # Prophet requires columns: ds (date) and y (value)
-    df.rename(columns={"date": "ds", "total_cost": "y"}, inplace=True)
-
-    # Ensure numeric
-    df["y"] = pd.to_numeric(df["y"], errors="coerce").fillna(0)
-
-    # Train model
-    model = Prophet()
-
+def train_and_forecast_daily():
+    """
+    Train a Prophet model on billing_daily.csv.
+    If Prophet is not installed or fails, fallback to simple rolling mean.
+    Returns a DataFrame with: ds, y, yhat
+    """
     try:
-        model.fit(df)
-    except Exception as e:
-        print("Prophet training failed:", e)
-        # Return a fallback dataframe to avoid dashboard crash
-        df["yhat"] = df["y"]
-        df["yhat_lower"] = df["y"]
-        df["yhat_upper"] = df["y"]
-        df.rename(columns={"ds": "date"}, inplace=True)
-        return df.rename(columns={"date": "ds"})
+        from prophet import Prophet
+    except Exception:
+        Prophet = None
 
-    # Forecast next 30 days
-    future = model.make_future_dataframe(periods=30)
-    forecast = model.predict(future)
+    csv_path = BASE_DIR / "advisor" / "billing_daily.csv"
 
-    # Convert forecast['ds'] to datetime
-    forecast["ds"] = pd.to_datetime(forecast["ds"])
+    # If file missing → return empty forecast
+    if not csv_path.exists():
+        return pd.DataFrame(columns=["ds", "y", "yhat"])
 
-    # Select needed fields
-    forecast = forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]]
+    df = pd.read_csv(csv_path)
 
-    # Merge with original daily actuals
-    merged = df.merge(forecast, on="ds", how="right")
+    # Ensure date column exists
+    if "date" in df.columns:
+        df["ds"] = pd.to_datetime(df["date"])
+    elif "ds" in df.columns:
+        df["ds"] = pd.to_datetime(df["ds"])
+    else:
+        raise ValueError("billing_daily.csv must contain 'date' or 'ds' column")
 
-    return merged
+    # Ensure cost column exists
+    if "total_cost" in df.columns:
+        df["y"] = pd.to_numeric(df["total_cost"], errors="coerce").fillna(0)
+    else:
+        df["y"] = 0
 
+    df = df[["ds", "y"]].sort_values("ds")
+
+    # -----------------------------------------
+    # CASE 1: Prophet installed → real forecasting
+    # -----------------------------------------
+    if Prophet is not None:
+        try:
+            model = Prophet(daily_seasonality=True)
+            model.fit(df.rename(columns={"ds": "ds", "y": "y"}))
+
+            future = model.make_future_dataframe(periods=30)
+            forecast = model.predict(future)[["ds", "yhat"]]
+
+            # Merge actual and predicted
+            merged = df.merge(forecast, on="ds", how="right")
+            return merged
+        except Exception:
+            pass  # fall back below
+
+    # -----------------------------------------
+    # CASE 2: Prophet missing → fallback forecast
+    # -----------------------------------------
+    # Simple rolling mean so prediction is NOT flat
+    df["yhat"] = df["y"].rolling(window=7, min_periods=1).mean()
+    return df

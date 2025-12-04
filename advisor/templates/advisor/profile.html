@@ -1,78 +1,44 @@
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>User Profile</title>
-    <link rel="stylesheet" href="{% static 'advisor/css/styles.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta charset="utf-8">
+  <title>Profile - CloudPulse AI</title>
+  <link rel="stylesheet" href="{% static 'advisor/css/styles.css' %}">
 </head>
-
 <body>
-
-    <!-- 🔥 FIXED: Profile Navbar -->
-    <header class="profile-navbar">
-        <div class="logo">
-            <i class="fas fa-cloud logo-icon"></i> CloudPulse AI
-        </div>
-
-        <div class="navbar-controls">
-            <a href="{% url 'dashboard' %}" class="nav-user-button">
-                <i class="fas fa-chart-line"></i> Dashboard
-            </a>
-            <a href="{% url 'logout' %}" class="neon-button">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-        </div>
-    </header>
-
-    <div class="profile-container">
-        <h1 class="profile-header"><i class="fas fa-user-circle"></i> User Profile</h1>
-
-        <div class="profile-layout">
-
-            <section class="card user-info-card">
-                <div class="avatar"><i class="fas fa-user"></i></div>
-                <h2 class="card-title">{{ user.username }}</h2>
-
-                <div class="profile-detail">
-                    <span class="profile-label">Email</span>
-                    <span class="profile-value">{{ user.email }}</span>
-                </div>
-
-                <div class="profile-detail">
-                    <span class="profile-label">User ID</span>
-                    <span class="profile-value user-id-value">{{ user.id }}</span>
-                </div>
-
-            </section>
-
-            <section class="card">
-                <h2 class="card-title"><i class="fas fa-sliders-h"></i> Preferences</h2>
-
-                <div class="form-group">
-                    <label>Theme</label>
-                    <select>
-                        <option selected>Dark Mode</option>
-                        <option>Light Mode</option>
-                    </select>
-                </div>
-
-                <div class="toggle-container">
-                    <span class="toggle-label">Email Alerts</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </section>
-        </div>
+  <header class="profile-navbar">
+    <div class="logo">CloudPulse AI</div>
+    <div class="navbar-controls">
+      <a href="{% url 'advisor:dashboard' %}" class="nav-user-button">Dashboard</a>
+      <a href="{% url 'advisor:logout' %}" class="neon-button">Logout</a>
     </div>
+  </header>
 
-    <footer class="profile-footer">
-        © 2025 CloudPulse AI · <a href="#">Privacy</a> · <a href="#">Terms</a>
-    </footer>
+  <div class="profile-container">
+    <h1 class="profile-header"><i class="fas fa-user-circle"></i> User Profile</h1>
 
+    <div class="profile-layout">
+      <section class="card user-info-card">
+        <div class="avatar"><i class="fas fa-user"></i></div>
+        <h2 class="card-title">{{ request.user.username }}</h2>
+        <div class="profile-detail"><span class="profile-label">Email</span><span class="profile-value">{{ request.user.email }}</span></div>
+        <div class="profile-detail"><span class="profile-label">User ID</span><span class="profile-value user-id-value">{{ request.user.id }}</span></div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title"><i class="fas fa-sliders-h"></i> Preferences</h2>
+
+        <form method="post" action="{% url 'advisor:profile' %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label>Extra notification emails (comma separated)</label>
+            <input name="extra_emails" value="{{ extras|join:', ' }}" placeholder="team1@example.com, team2@example.com" />
+          </div>
+          <button class="cta-button" type="submit">Save</button>
+        </form>
+      </section>
+    </div>
+  </div>
 </body>
 </html>

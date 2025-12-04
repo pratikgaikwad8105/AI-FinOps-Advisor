@@ -2,216 +2,282 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
     <title>CloudPulse AI - Dashboard</title>
-
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'advisor/css/styles.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+      /* small local safety adjustments (keeps layout stable) */
+      .top-controls { display:flex; gap:12px; align-items:center; margin:18px 0; }
+      .summary-cards { gap:18px; margin-bottom:8px; }
+      .service-tag { max-width:110px; display:inline-block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .table-desc { white-space:normal; }
+      .chart-legend { justify-content: flex-start; gap:16px; }
+      .live-dot { margin-left:auto; color:#00ff88; font-weight:700; }
+    </style>
 </head>
-
 <body class="dashboard-body">
-
-    <!-- NAVBAR EXACTLY LIKE YOUR ORIGINAL -->
     <header class="navbar">
-
-    <div class="logo">
-        <i class="fas fa-cloud fa-lg logo-icon"></i>
-        CloudPulse AI
-    </div>
-
-    <div class="header-title">Cloud Spending Dashboard</div>
-
-    <a href="{% url 'profile' %}" class="user-profile-link">
-        <div class="user-profile">
-            <i class="fas fa-user-circle fa-lg user-icon"></i>
-            User
+        <div class="logo">
+            <i class="fas fa-cloud logo-icon"></i>
+            CloudPulse AI
         </div>
-    </a>
 
-    <a href="{% url 'logout' %}" class="logout-button">
-        <i class="fas fa-sign-out-alt"></i> Logout
-    </a>
+        <div class="header-title">Cloud Spending Dashboard</div>
 
-</header>
+        <a href="{% url 'advisor:profile' %}" class="user-profile-link">
+            <div class="user-profile nav-user-button">
+                <i class="fas fa-user-circle"></i>
+                {{ request.user.get_full_name|default:request.user.username }}
+            </div>
+        </a>
+
+        <a href="{% url 'advisor:logout' %}" class="logout-button nav-user-button">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </header>
 
     <main class="dashboard-main">
-
-
-        <!-- ========== SUMMARY CARDS ========== -->
+        <!-- SUMMARY CARDS -->
         <section class="summary-cards">
             <div class="card summary-card">
-                <span class="card-title">Actual Cost (Last 30 days)</span>
-                <div class="metric-value">${{ summary.total_cost }}</div>
-
-                <div class="metric-change {% if summary.change_percentage >= 0 %}negative{% else %}positive{% endif %}">
-                    <i class="fas {% if summary.change_percentage >= 0 %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i>
-                    {{ summary.change_percentage }}%
+                <div class="card-title">Actual Cost (Last 30 days)</div>
+                <div class="metric-value">${{ summary.total_cost|default:"0.00" }}</div>
+                <div class="metric-change negative">
+                    <i class="fas fa-arrow-up"></i>
+                    {{ summary.change_percentage|default:"0.0" }}% (vs. previous)
                 </div>
             </div>
 
             <div class="card summary-card">
-                <span class="card-title">Forecasted Cost</span>
-                <div class="metric-value">${{ summary.predicted_next_month }}</div>
+                <div class="card-title">Forecasted Cost (Next 30 days)</div>
+                <div class="metric-value">${{ summary.predicted_next_month|default:"0.00" }}</div>
                 <div class="metric-change positive">
                     <i class="fas fa-chart-line"></i> Model Prediction
                 </div>
             </div>
 
             <div class="card summary-card glowing-green">
-                <span class="card-title">Savings Potential</span>
-                <div class="metric-value">${{ summary.savings }}</div>
+                <div class="card-title">Savings Potential</div>
+                <div class="metric-value">${{ summary.savings|default:"0.00" }}</div>
                 <div class="metric-change positive">
-                    <i class="fas fa-wallet"></i> Optimized Estimate
+                    <i class="fas fa-piggy-bank"></i> Optimized Estimate
                 </div>
             </div>
         </section>
 
+        <hr>
+
+        <!-- Controls -->
+        <div class="top-controls">
+            <button id="btn-trigger" class="btn-red">Trigger Anomaly</button>
+            <button id="btn-solve" class="btn-green">Solve Anomaly</button>
+
+            <div class="live-dot">● LIVE</div>
+        </div>
 
         <hr>
 
-        <!-- ========== LIVE CONTROLS ========== -->
-        <section style="display:flex; gap:12px; margin-bottom:15px;">
-            <a href="{% url 'force_anomaly' %}">
-                <button class="cta-button" style="background:#ff3b3b;">Trigger Anomaly</button>
-            </a>
-
-            <a href="{% url 'solve_anomaly' %}">
-                <button class="cta-button" style="background:#0db56f;">Solve Anomaly</button>
-            </a>
-
-            <div class="live-indicator">● LIVE</div>
-        </section>
-
-
-        <hr>
-
-        <!-- ========== HOURLY GRAPH (REPLACES MONTHLY) ========== -->
+        <!-- CHART -->
         <section class="charts-section card">
-            <h2>Hourly Cloud Spend (Real-Time Simulation)</h2>
-
+            <h2>Hourly Cloud Spend (Live simulation)</h2>
             <canvas id="hourlyChart"></canvas>
 
             <div class="chart-legend">
-                <span class="legend-item red-line-marker">Hourly Cost</span>
+                <div class="legend-item"><span style="display:inline-block;width:14px;height:8px;background:#ff6b4d;margin-right:8px;border-radius:2px;"></span> Actual (red)</div>
+                <div class="legend-item"><span style="display:inline-block;width:14px;height:8px;border:2px dashed #00ff88;margin-right:8px;border-radius:2px;"></span> Prediction (green)</div>
             </div>
         </section>
-
 
         <hr>
 
-        <!-- ==========  TOP ANOMALIES + TOP RECOMMENDATIONS  ========== -->
+        <!-- ALERTS + RECOMMENDATIONS -->
         <section class="tables-section">
-
-            <!-- ANOMALIES -->
             <div class="card anomaly-table">
-                <h3>
-                    <i class="fas fa-exclamation-triangle"></i> Anomaly Alerts
+                <h3><i class="fas fa-exclamation-triangle"></i> Anomaly Alerts
+                    <a href="{% url 'advisor:anomalies_list' %}" style="float:right; font-size:0.95rem; color:var(--accent-blue)">View All →</a>
                 </h3>
-
                 <table>
                     <thead>
-                        <tr>
-                            <th>Date / Time</th>
-                            <th>Service</th>
-                            <th>Description</th>
-                            <th>Severity</th>
-                        </tr>
+                        <tr><th>Date / Time</th><th>Service</th><th class="table-desc">Description</th><th>Severity</th></tr>
                     </thead>
-
-                    <tbody>
+                    <tbody id="anomaly-rows">
                         {% for a in top_anomalies %}
-                        <tr class="{% if a.severity == 'HIGH' %}high-severity flash-anomaly{% endif %}">
+                        <tr class="{% if a.severity == 'HIGH' %}high-severity{% endif %}">
                             <td>{{ a.timestamp }}</td>
-                            <td class="service-tag">{{ a.service }}</td>
-                            <td>{{ a.description }}</td>
+                            <td><span class="service-tag">{{ a.service }}</span></td>
+                            <td class="table-desc">{{ a.description }}</td>
                             <td><span class="severity {{ a.severity|lower }}">{{ a.severity }}</span></td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="4">No anomalies detected</td></tr>
+                        <tr><td colspan="4">No recent anomalies.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
-
-                <a href="{% url 'anomalies_list' %}" class="view-all-link">View All →</a>
             </div>
 
-
-            <!-- RECOMMENDATIONS -->
             <div class="card recommendations-table">
-                <h3>
-                    <i class="fas fa-lightbulb"></i> Optimization Recommendations
+                <h3><i class="fas fa-lightbulb"></i> Optimization Recommendations
+                    <a href="{% url 'advisor:recommendations_list' %}" style="float:right; font-size:0.95rem; color:var(--accent-blue)">View All →</a>
                 </h3>
-
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Recommendation</th>
-                            <th>Service</th>
-                            <th>Estimated Savings</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
+                    <thead><tr><th>Recommendation</th><th>Service</th><th>Estimated Savings</th></tr></thead>
+                    <tbody id="rec-rows">
                         {% for r in top_recs %}
                         <tr>
-                            <td>{{ r.title }}</td>
-                            <td class="service-tag">{{ r.service }}</td>
-                            <td><span class="savings-value">{{ r.savings_text }}</span></td>
+                            <td>{{ r.title|default:r.title }}</td>
+                            <td><span class="service-tag">{{ r.service }}</span></td>
+                            <td><span class="savings-value">${{ r.savings_value }}</span></td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="3">No recommendations</td></tr>
+                        <tr><td colspan="3">No recommendations.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
-
-                <a href="{% url 'recommendations_list' %}" class="view-all-link">View All →</a>
             </div>
-
         </section>
 
+        <footer class="dashboard-footer">
+            &copy; 2025 CloudPulse AI. All rights reserved. |
+            <a href="#">Privacy</a> |
+            <a href="#">Terms</a>
+        </footer>
     </main>
 
-    <footer class="dashboard-footer">
-        &copy; 2025 CloudPulse AI. All rights reserved.
-    </footer>
-
-
-<!-- ========== CHART JS SCRIPT ========== -->
+<!-- place near bottom of dashboard.html, just before </body> -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const hourlyData = {{ hourly_chart_json|safe }};
-    const labels = hourlyData.map(x => x.timestamp);
-    const values = hourlyData.map(x => x.cost);
+const hourlyData = {{ hourly_chart_json|safe }}; // initial (from context)
+let chart; // will initialize Chart.js
 
-    new Chart(document.getElementById("hourlyChart"), {
-        type: "line",
+document.getElementById("btn-trigger").addEventListener("click", () => {
+    fetch("{% url 'advisor:force_anomaly' %}");
+});
+
+document.getElementById("btn-solve").addEventListener("click", () => {
+    fetch("{% url 'advisor:solve_anomaly' %}");
+});
+
+
+function initChart(initialPoints, futurePoints) {
+    const ctx = document.getElementById('hourlyChart').getContext('2d');
+    const labels = initialPoints.map(p => p.timestamp);
+    const costs = initialPoints.map(p => p.cost);
+
+    const futureLabels = futurePoints ? futurePoints.map(p => p.timestamp) : [];
+    const futureVals = futurePoints ? futurePoints.map(p => p.predicted) : [];
+
+    chart = new Chart(ctx, {
+        type: 'line',
         data: {
-            labels: labels,
-            datasets: [{
-                label: "Hourly Cost",
-                data: values,
-                borderColor: "rgb(255,99,71)",
-                backgroundColor: "rgba(255,99,71,0.1)",
-                pointRadius: 2,
-                tension: 0.25
-            }]
+            labels: labels.concat(futureLabels),
+            datasets: [
+                {
+                    label: 'Actual (red)',
+                    data: costs.concat(new Array(futureLabels.length).fill(null)),
+                    borderColor: '#ff6b5f',
+                    backgroundColor: 'rgba(255,107,95,0.08)',
+                    tension: 0.25,
+                    pointRadius: 3,
+                    borderWidth: 2,
+                },
+                {
+                    label: 'Prediction (green)',
+                    data: new Array(labels.length).fill(null).concat(futureVals),
+                    borderColor: '#00ff88',
+                    borderDash: [6,4],
+                    pointRadius: 3,
+                    borderWidth: 2,
+                }
+            ]
         },
         options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
+            interaction: { intersect: false },
+            plugins: { legend: { position: 'top' } },
             scales: {
-                x: { ticks: { color: "#bfc7cf" } },
-                y: { ticks: { color: "#bfc7cf" } }
+                x: { display: true, ticks: { maxRotation: 45, minRotation: 30 } },
+                y: { beginAtZero: true }
             }
         }
     });
+}
 
-    // Auto-refresh every 5 seconds
-    setInterval(() => { window.location.reload(); }, 5000);
+function updateFromServer(data) {
+    // update chart
+    const labels = data.hourly.map(p => p.timestamp);
+    const costs = data.hourly.map(p => p.cost);
+    const future = data.future || [];
+
+    // rebuild the chart data arrays
+    const futureLabels = future.map(p => p.timestamp);
+    const futureVals = future.map(p => p.predicted);
+
+    chart.data.labels = labels.concat(futureLabels);
+    chart.data.datasets[0].data = costs.concat(new Array(futureLabels.length).fill(null));
+    chart.data.datasets[1].data = new Array(labels.length).fill(null).concat(futureVals);
+    chart.update();
+
+    // update top anomalies list (DOM id: anomaly-rows)
+    const anomContainer = document.getElementById('anomaly-rows');
+    if (anomContainer && data.top_anomalies) {
+        anomContainer.innerHTML = '';
+        data.top_anomalies.forEach(a => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${a.timestamp}</td>
+                            <td><span class="service-tag">${a.service}</span></td>
+                            <td class="table-desc">${a.description}</td>
+                            <td><span class="severity ${a.severity.toLowerCase()}">${a.severity}</span></td>`;
+            anomContainer.appendChild(tr);
+        });
+    }
+
+    // update recommendations (container id: rec-rows)
+    const recContainer = document.getElementById('rec-rows');
+    if (recContainer && data.top_recs) {
+        recContainer.innerHTML = '';
+        data.top_recs.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${r.title}</td>
+                            <td class="service-tag">${r.service}</td>
+                            <td><span class="savings-value">${r.savings_text}</span></td>`;
+            recContainer.appendChild(tr);
+        });
+    }
+
+    // flash if new anomalies arrived
+    if (data.new_anomalies && data.new_anomalies.length > 0) {
+        // simple highlight
+        document.querySelectorAll('.anomaly-table .card').forEach(c => {
+            c.classList.add('data-active');
+            setTimeout(()=> c.classList.remove('data-active'), 1500);
+        });
+    }
+}
+
+// poll every 5s
+let polling = true;
+function pollServer(forceAnomaly=false) {
+    const url = `{% url 'advisor:live_update' %}` + (forceAnomaly ? '?force=1' : '');
+    fetch(url, { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => updateFromServer(data))
+        .catch(e => console.log("poll error", e));
+}
+
+// init
+document.addEventListener('DOMContentLoaded', () => {
+    const initPoints = {{ hourly_chart_json|safe }};
+    initChart(initPoints, []);
+    // start polling every 5 seconds (simulate 1 hour per 5s)
+    setInterval(()=> pollServer(false), 5000);
+    // wire trigger button
+    const btn = document.getElementById('btn-trigger');
+    if (btn) btn.addEventListener('click', ()=> { pollServer(true); });
+});
 </script>
-
 </body>
 </html>

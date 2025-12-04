@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'advisor'
+    'advisor.apps.AdvisorConfig',
 ]
 
 MIDDLEWARE = [
@@ -128,4 +128,25 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+# EMAIL CONFIG (GMAIL)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = "gaikwadpratik8105@gmail.com"          # Replace
+EMAIL_HOST_PASSWORD = "ghxg qlan gkur gtvu"   # Replace
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# ---------------------------------------------------
+# STATIC FILES SETTINGS
+# ---------------------------------------------------
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# Only for collectstatic (deployment)
+STATIC_ROOT = BASE_DIR / "staticfiles"
 

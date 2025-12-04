@@ -1198,3 +1198,117 @@ input:checked + .slider:before {
     50% { opacity: .3; }
     100% { opacity: 1; }
 }
+/* Prevent service box from expanding and breaking layout */
+.service-tag {
+    max-width: 80px;         /* limit width */
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Fix for recommendation service tag */
+.recommendation-service .service-tag {
+    max-width: 80px;
+    display: inline-block;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+td {
+    vertical-align: middle;
+    padding: 12px 10px;
+    white-space: nowrap;
+}
+
+td.description {
+    white-space: normal;
+    width: 100%;
+}
+
+/* ensure table columns layout: service fixed width, description flexible */
+.anomaly-table table td.service-col,
+.anomaly-table table th.service-col {
+    width: 170px; /* adjust as needed */
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.anomaly-table table td.description-col {
+    width: auto;
+}
+
+/* ensure the service badge doesn't overflow */
+.service-badge {
+    display: inline-block;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.tag {
+    padding: 8px 16px;
+    background: #0d2238;
+    border-radius: 10px;
+    display: inline-block;
+    min-width: 90px;
+    text-align: center;
+}
+
+td {
+    padding: 12px 20px !important;
+}
+canvas {
+    z-index: 5 !important;
+    position: relative;
+}
+/* service tag layout fix */
+.service-tag {
+  display: inline-block;   /* ensure it takes its own box */
+  margin-right: 20px;
+  vertical-align: middle;
+  min-width: 120px;
+  text-align: center;
+  padding: 14px 18px;
+  box-sizing: border-box;
+}
+.table-desc {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: calc(100% - 160px);
+}
+
+/* 🔥 Neon Button Styles */
+.btn-red {
+    background: #ff4b4b;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 0 10px #ff4b4b88;
+    transition: 0.2s ease-in-out;
+}
+
+.btn-red:hover {
+    background: #ff6b6b;
+    box-shadow: 0 0 14px #ff4b4b;
+}
+
+.btn-green {
+    background: #00ff88;
+    color: #002b1a;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 0 10px #00ff8899;
+    transition: 0.2s ease-in-out;
+}
+
+.btn-green:hover {
+    background: #00ffaa;
+    box-shadow: 0 0 14px #00ff88;
+}
